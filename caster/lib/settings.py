@@ -1,11 +1,17 @@
 import json
 import os
+import posixpath
 import sys
 import collections
+import errno
 
 SETTINGS = {}
-_SETTINGS_PATH = os.path.realpath(__file__).split("lib")[0]+"bin\\data\\settings.json"
-BASE_PATH = os.path.realpath(__file__).split("\\lib")[0].replace("\\", "/")
+
+BASE_PATH = posixpath.normpath(posixpath.join(posixpath.realpath(__file__), '../'))
+_USER_DATA_PATH = os.path.normpath(os.path.join(BASE_PATH, "user", "data"))
+_USER_SETTINGS_PATH = os.path.join(BASE_PATH, "user", "settings")
+_USER_SETTINGS_FILE = os.path.join(_USER_SETTINGS_PATH, "settings.json")
+print "User data paths are:\n %s,\n %s,\n %s" % BASE_PATH, _USER_DATA_PATH, _USER_SETTINGS_FILE
 
 # title
 SOFTWARE_VERSION_NUMBER = "0.5.8"
@@ -174,7 +180,7 @@ def _init(path):
     result, num_default_added = _deep_merge_defaults(result, _DEFAULT_SETTINGS)
     if num_default_added > 0:
         print "Default settings values added: %d " % num_default_added
-        _save(result, _SETTINGS_PATH)
+        _save(result, _USER_SETTINGS_FILE)
     return result
 
 
@@ -197,12 +203,27 @@ def _deep_merge_defaults(data, defaults):
             changes += 1
     return data, changes
 
+def _make_sure_path_exists(path):
+    '''
+    Ensures a directory exists, and makes it if it doesn't.
+    This should really be in caster.lib.utilities, but that would form a circular
+    dependency at the moment.
+    '''
+    try:
+        os.makedirs(path)
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise
+
+def _upgrade_data_location(user_data_path):
+    '''Automatically migrates existing data to out of caster/bin/data to user directory.'''
+    _make_sure_path_exists(user_data_path)
 
 
 # Public interface:
 def save_config():
     '''Save the current in-memory settings to disk'''
-    _save(SETTINGS, _SETTINGS_PATH)
+    _save(SETTINGS, _USER_SETTINGS_FILE)
 
 def get_settings():
     global SETTINGS
@@ -221,7 +242,7 @@ def report_to_file(message, path=None):
 
 
 ## Kick everything off.
-SETTINGS = _init(_SETTINGS_PATH)
+SETTINGS = _init(_USER_SETTINGS_FILE)
 for path in [
         SETTINGS["paths"]["REMOTE_DEBUGGER_PATH"],
         SETTINGS["paths"]["WXPYTHON_PATH"]

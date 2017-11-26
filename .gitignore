@@ -1,9 +1,6 @@
 # Ignore junk
 .idea/
 *.pyc
-*.json
-*.wav
-*.class
 test.py
 log.txt
 complexity_report*
@@ -11,12 +8,9 @@ complexity_report*
 *.*\#
 *.*~
 
-
-# Ignore Natlink
-/core/
-
-# Ignore User Rules and Filters
+# Ignore User Modules and Data
 /caster/user
+/caster/bin/data/*.json
 
 # Ignore Custom Sikuli Scripts
 /caster/asynch/sikuli/scripts
